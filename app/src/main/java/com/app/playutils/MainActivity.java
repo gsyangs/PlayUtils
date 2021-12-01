@@ -1,0 +1,194 @@
+package com.app.playutils;
+
+import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.yorhp.recordlibrary.OnScreenShotListener;
+import com.yorhp.recordlibrary.ScreenRecordUtil;
+import com.yorhp.recordlibrary.ScreenShotUtil;
+import com.yorhp.recordlibrary.ScreenUtil;
+
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+
+import java.io.IOException;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import permison.PermissonUtil;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+@RequiresApi(api = Build.VERSION_CODES.M)
+public class MainActivity extends AppCompatActivity {
+
+    private Button openServer;
+    private Button opencvServer;
+    private TextView info;
+    private static int REQUEST_MEDIA_PROJECTION = 0;
+    private static int REQUEST_OTHER_PERMISSION = 1;
+    private LocalReceiver mLocalReceiver;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        init();
+    }
+
+    private void init() {
+        boolean openCvSuccess = OpenCVLoader.initDebug();
+        openServer = findViewById(R.id.open_server);
+        opencvServer = findViewById(R.id.opencv_server);
+        info = findViewById(R.id.info);
+
+        if (openCvSuccess) {
+            System.out.println("初始化Opencv成功！");
+            Intent itemIntent = new Intent(this, PlayScreenService.class);
+            startService(itemIntent);
+
+            opencvServer.setOnClickListener(v -> {
+                try {
+                    Mat srcmat1 = Utils.loadResource(MainActivity.this, R.drawable.screenshot_1);
+                    Mat dstmat1 = Utils.loadResource(MainActivity.this, R.drawable.mr_1);
+
+                    Mat srcmat2 = Utils.loadResource(MainActivity.this, R.drawable.screenshot_2);
+                    Mat dstmat2 = Utils.loadResource(MainActivity.this, R.drawable.mr_2);
+
+                    Point point1 = OpencvOCR.orc(1, srcmat1, dstmat1);
+                    Point point2 = OpencvOCR.orc(2, srcmat2, dstmat2);
+                    if (point1 != null && point2 != null) {
+                        AntoApplication.getInstance().setPoint(point1);
+                        AntoApplication.getInstance().setPoint(point2);
+                        info.setText("第" + point1.getIndex() + " 步点击坐标：x：" + (point1.getMaxx() + point1.getMinX()) / 2
+                                + " y：" + (point1.getMaxy() + point1.getMiny()) / 2 + "\n"
+                                + "第" + point2.getIndex() + " 步点击坐标：x：" + (point2.getMaxx() + point2.getMinX()) / 2
+                                + " y：" + (point2.getMaxy() + point2.getMiny()) / 2 + " \n ");
+                    } else {
+                        info.setText("opencv 初始化失败！ 无法运行脚本，请结束进程重新打开！");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            });
+
+
+            openServer.setOnClickListener(v -> {
+                if (AccessibilityUtils.openAccessibility(MainActivity.this) && startOverLay() && checkReadWritePermission(MainActivity.this)) {
+                    Intent intent1 = getPackageManager().getLaunchIntentForPackage(Constant.packageName);
+                    startActivity(intent1);
+                }
+            });
+        } else {
+            info.setText("opencv 初始化失败！ 无法运行脚本，请结束进程重新打开！");
+        }
+
+        initBroadcast();
+
+        PermissonUtil.checkPermission(this, null, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        ScreenUtil.getScreenSize(this);
+
+    }
+
+    private void initBroadcast() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Constant.openScreen);
+        mLocalReceiver = new LocalReceiver();
+        registerReceiver(mLocalReceiver, intentFilter);
+
+    }
+
+    private boolean startOverLay() {
+        if (!Settings.canDrawOverlays(MainActivity.this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+            startActivity(intent);
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkReadWritePermission(AppCompatActivity activity) {
+        boolean isGranted = true;
+        if (activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
+            isGranted = false;
+        }
+        if (activity.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
+            isGranted = false;
+        }
+        if (!isGranted) {
+            activity.requestPermissions(
+                    new String[]{
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    },
+                    REQUEST_OTHER_PERMISSION);
+        }
+        return isGranted;
+    }
+
+
+    //拿到广播去截图
+    private class LocalReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction() == Constant.openScreen) {
+                ScreenShotUtil.getInstance().screenShot(MainActivity.this, new OnScreenShotListener() {
+                    @Override
+                    public void screenShot() {
+                        Bitmap bitmap = ScreenShotUtil.getInstance().getScreenShot();
+                        //截图完成
+                        if (bitmap != null) {
+                            System.out.println("图片宽高：" + bitmap.getWidth() + "   " + bitmap.getHeight());
+                            try {
+                                Mat dstmat = Utils.loadResource(MainActivity.this, R.drawable.mr_1);
+                                Mat srcmat = new Mat();
+                                Utils.bitmapToMat(bitmap, srcmat);
+                                Point point = OpencvOCR.orc(1, srcmat, dstmat);
+                                System.out.println("第" + point.getIndex() + " 步点击坐标：x：" + (point.getMaxx() + point.getMinX()) / 2
+                                        + " y：" + (point.getMaxy() + point.getMiny()) / 2 + "\n");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        ScreenRecordUtil.getInstance().destroy();
+                    }
+
+                });
+            }
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_OTHER_PERMISSION) {
+            for (int i = 0; i < grantResults.length; i++) {
+                if (grantResults[i] != PERMISSION_GRANTED) {
+                    Toast.makeText(this, "需要取得权限以读写文件", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+                    startActivity(intent);
+                    break;
+                }
+            }
+            finish();
+        }
+    }
+}
