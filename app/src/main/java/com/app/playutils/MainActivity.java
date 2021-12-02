@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -14,11 +15,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.yorhp.recordlibrary.OnScreenShotListener;
-import com.yorhp.recordlibrary.ScreenRecordUtil;
-import com.yorhp.recordlibrary.ScreenShotUtil;
-import com.yorhp.recordlibrary.ScreenUtil;
-
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -26,9 +22,9 @@ import org.opencv.core.Mat;
 import java.io.IOException;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import permison.PermissonUtil;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -71,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
                     Mat srcmat2 = Utils.loadResource(MainActivity.this, R.drawable.screenshot_2);
                     Mat dstmat2 = Utils.loadResource(MainActivity.this, R.drawable.mr_2);
 
-                    Point point1 = OpencvOCR.orc(1, srcmat1, dstmat1);
-                    Point point2 = OpencvOCR.orc(2, srcmat2, dstmat2);
+                    Point point1 = OpencvOCR.ocr(1, srcmat1, dstmat1);
+                    Point point2 = OpencvOCR.ocr(2, srcmat2, dstmat2);
                     if (point1 != null && point2 != null) {
                         AntoApplication.getInstance().setPoint(point1);
                         AntoApplication.getInstance().setPoint(point2);
@@ -101,9 +97,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         initBroadcast();
-
-        PermissonUtil.checkPermission(this, null, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        ScreenUtil.getScreenSize(this);
 
     }
 
@@ -149,32 +142,46 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction() == Constant.openScreen) {
-                ScreenShotUtil.getInstance().screenShot(MainActivity.this, new OnScreenShotListener() {
-                    @Override
-                    public void screenShot() {
-                        Bitmap bitmap = ScreenShotUtil.getInstance().getScreenShot();
-                        //截图完成
-                        if (bitmap != null) {
-                            System.out.println("图片宽高：" + bitmap.getWidth() + "   " + bitmap.getHeight());
-                            try {
-                                Mat dstmat = Utils.loadResource(MainActivity.this, R.drawable.mr_1);
-                                Mat srcmat = new Mat();
-                                Utils.bitmapToMat(bitmap, srcmat);
-                                Point point = OpencvOCR.orc(1, srcmat, dstmat);
-                                System.out.println("第" + point.getIndex() + " 步点击坐标：x：" + (point.getMaxx() + point.getMinX()) / 2
-                                        + " y：" + (point.getMaxy() + point.getMiny()) / 2 + "\n");
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        ScreenRecordUtil.getInstance().destroy();
-                    }
-
-                });
+                try2StartScreenShot();
             }
         }
     }
 
+    //截图
+    private void try2StartScreenShot() {
+        MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), REQUEST_MEDIA_PROJECTION);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_MEDIA_PROJECTION) {
+            if (resultCode == RESULT_OK && data != null) {
+                ScreenShotHelper screenShotHelper = new ScreenShotHelper(MainActivity.this, resultCode, data, new ScreenShotHelper.OnScreenShotListener() {
+                    @Override
+                    public void onFinish(Bitmap bitmap) {
+                        //截图完成
+                        if (bitmap != null){
+                            System.out.println("图片宽高：" + bitmap.getWidth() +  "   " + bitmap.getHeight());
+                            try {
+                                Mat dstmat = Utils.loadResource(MainActivity.this, R.drawable.mr_1);
+                                Mat srcmat = new Mat();
+                                Utils.bitmapToMat(bitmap,srcmat);
+                                Point point = OpencvOCR.ocr(1,srcmat,dstmat);
+                                System.out.println("第" + point.getIndex() + " 步点击坐标：x：" + (point.getMaxx() + point.getMinX())/2
+                                        +" y："+ (point.getMaxy() + point.getMiny())/2 + "\n");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    }
+                });
+                screenShotHelper.startScreenShot();
+            }
+        }
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

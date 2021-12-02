@@ -36,7 +36,5 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation 'com.github.tyhjh:ScreenShot:v1.0.1'
-    implementation 'com.github.tyhjh:PermissionUtil:v1.0.5'
     implementation project(path: ':opencv')
 }

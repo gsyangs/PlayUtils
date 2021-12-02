@@ -21,7 +21,7 @@ public class OpencvOCR {
      * @param srcmat 原图
      * @param dstmat 模板图片
      */
-    public static com.app.playutils.Point orc(int index, Mat srcmat, Mat dstmat){
+    public static com.app.playutils.Point ocr(int index, Mat srcmat, Mat dstmat){
        return matchTemplate(index,srcmat, dstmat, Imgproc.TM_CCOEFF_NORMED);
     }
 
