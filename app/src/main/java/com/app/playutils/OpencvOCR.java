@@ -21,7 +21,7 @@ public class OpencvOCR {
      * @param srcmat 原图
      * @param dstmat 模板图片
      */
-    public static com.app.playutils.Point ocr(int index, Mat srcmat, Mat dstmat){
+    public static DotPoint ocr(int index, Mat srcmat, Mat dstmat){
        return matchTemplate(index,srcmat, dstmat, Imgproc.TM_CCOEFF_NORMED);
     }
 
@@ -32,7 +32,7 @@ public class OpencvOCR {
      * @param tempMat
      * @param method
      */
-    private static com.app.playutils.Point matchTemplate(int index,Mat inMat, Mat tempMat, int method) {
+    private static DotPoint matchTemplate(int index, Mat inMat, Mat tempMat, int method) {
 
         Mat inMat1 = new Mat();
         Mat tempMat1 = new Mat();
@@ -54,13 +54,13 @@ public class OpencvOCR {
         Log.e(TAG,templatW + "  " + templatH);
         Log.e(TAG, "匹配的值：" + mmr.maxVal + "   ------左上角坐标：" + mmr.maxLoc.x + "," + mmr.maxLoc.y + "   ------右下角坐标：" + (mmr.maxLoc.x + templatW) + "," + (mmr.maxLoc.y+ templatH));
 
-        com.app.playutils.Point point = new com.app.playutils.Point();
+        DotPoint point = new DotPoint();
         point.setIndex(index);
         point.setMinX(NumberUtils.dtol(mmr.maxLoc.x));
         point.setMiny(NumberUtils.dtol(mmr.maxLoc.y));
         point.setMaxx(NumberUtils.dtol(mmr.maxLoc.x + templatW));
         point.setMaxy(NumberUtils.dtol(mmr.maxLoc.y+ templatH));
-
+        point.setMaxVal(mmr.maxVal);
 //        Bitmap bitmap = Bitmap.createBitmap(inMat1.width(), inMat1.height(), Bitmap.Config.ARGB_8888);
 //        Utils.matToBitmap(inMat1, bitmap);
 //        iv.setImageBitmap(bitmap);

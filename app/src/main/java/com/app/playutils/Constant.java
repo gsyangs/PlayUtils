@@ -13,5 +13,7 @@ public class Constant {
     public static String activitypName1 = "com.unity3d.player.UnityPlayerActivity";
 
     public static String openScreen = "screen_img";
+
+    public static String dotClike = "dot_clike";
 }
 

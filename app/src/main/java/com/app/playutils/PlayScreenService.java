@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 
 import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 /**
  * @author:create by ys
@@ -16,6 +17,8 @@ import androidx.annotation.Nullable;
  * 邮箱 894417048@qq.com
  */
 public class PlayScreenService extends IntentService {
+
+    private LocalBroadcastManager mLocalBroadcastManager;
 
     public PlayScreenService() {
         super("PlayScreenService");
@@ -26,10 +29,11 @@ public class PlayScreenService extends IntentService {
         if (intent != null) {
             if (AntoApplication.getInstance().isOpenOKactivity()){
                 //发送截图广播
-                sendBroadcast(new Intent(Constant.openScreen));
+                mLocalBroadcastManager = LocalBroadcastManager.getInstance(this);
+                mLocalBroadcastManager.sendBroadcast(new Intent(Constant.openScreen));
             }
 
-            int anHour = 10 * 1000;
+            int anHour = 5 * 1000;
             AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
             long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
             Intent i = new Intent(this, OpenServiceReceiver.class);

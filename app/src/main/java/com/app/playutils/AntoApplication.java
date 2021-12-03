@@ -3,7 +3,6 @@ package com.app.playutils;
 import android.app.Application;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -17,7 +16,10 @@ public class AntoApplication extends Application {
 
     private boolean isOpenOKactivity;
 
-    private List<Point> points;
+    private List<DotPoint> points;
+
+    //当前界面可点击图标
+    private DotPoint point;
 
 
     @Override
@@ -41,7 +43,7 @@ public class AntoApplication extends Application {
         isOpenOKactivity = openOKactivity;
     }
 
-    public void setPoint(Point point){
+    public void setPoints(DotPoint point){
         if (points != null){
         } else {
             points = new ArrayList<>();
@@ -49,7 +51,15 @@ public class AntoApplication extends Application {
         points.add(point);
     }
 
-    public List<Point> getPoints() {
+    public List<DotPoint> getPoints() {
         return points;
+    }
+
+    public void setPoint(DotPoint point) {
+        this.point = point;
+    }
+
+    public DotPoint getPoint() {
+        return point;
     }
 }

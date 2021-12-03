@@ -20,12 +20,20 @@
         android:layout_marginTop="20dp"
         android:text="获取游戏界面坐标点"/>
 
+
     <Button
         android:id="@+id/open_server"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="启动服务"/>
+
+    <Button
+        android:id="@+id/close_server"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="关闭服务"/>
 
 
     <TextView
