@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
                     } else {
                         info.setText("opencv 初始化失败！ 无法运行脚本，请结束进程重新打开！");
                     }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -202,6 +205,8 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
     @Override
     public void stop() {
         Toast.makeText(this,"服务关闭！",Toast.LENGTH_LONG).show();
+        Intent itemIntent = new Intent(this, PlayScreenService.class);
+        stopService(itemIntent);
     }
 
 
@@ -248,6 +253,14 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
                 }
             }
             finish();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mLocalReceiver != null){
+            unregisterReceiver(mLocalReceiver);
         }
     }
 }

@@ -15,5 +15,14 @@ public class Constant {
     public static String openScreen = "screen_img";
 
     public static String dotClike = "dot_clike";
+
+
+    public static final String SP_INIT = "SP_INIT";
+    public static final String SP_RECT_LEFT = "SP_RECT_LEFT";
+    public static final String SP_RECT_TOP = "SP_RECT_TOP";
+    public static final String SP_RECT_HEIGH = "SP_RECT_HEIGH";
+
+
+    public static final String APP_CACHE_DIR = "/storage/emulated/0/playutils/" ;
 }
 

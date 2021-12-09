@@ -15,7 +15,6 @@ import org.opencv.imgproc.Imgproc;
 public class OpencvOCR {
 
     public static final String TAG = "opencv++++";
-
     /**
      * @param index 步骤
      * @param srcmat 原图
