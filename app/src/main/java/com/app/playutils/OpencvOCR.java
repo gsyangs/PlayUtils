@@ -1,11 +1,23 @@
 package com.app.playutils;
 
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author:create by ys
@@ -64,6 +76,61 @@ public class OpencvOCR {
 //        Utils.matToBitmap(inMat1, bitmap);
 //        iv.setImageBitmap(bitmap);
         return point;
+    }
+
+    //橘黄色  0 22
+    //黄色 22 38
+    //绿色 38 75
+    //蓝色 75 130
+    //紫色 130 160
+    //红色 160 179
+    //mat默认是BGR
+    public static Bitmap findColorPoint(Mat srcmat){
+        Bitmap bitmap = Bitmap.createBitmap(srcmat.width(),srcmat.height(),Bitmap.Config.ARGB_8888);
+        Imgproc.cvtColor(srcmat,srcmat,Imgproc.COLOR_BGR2RGB);
+        Utils.matToBitmap(srcmat,bitmap);
+
+        //定义一个颜色 mat
+        Mat hsvmat = new Mat();
+        //hsv 转换
+        Imgproc.cvtColor(srcmat, hsvmat, Imgproc.COLOR_RGB2HSV);
+        //查找橘黄色按钮轮廓
+        Core.inRange(hsvmat,new Scalar(15,220,40),new Scalar(25,255,255),hsvmat);
+        //获取矩阵
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(3.2,3.2));
+        //开运算
+        Imgproc.morphologyEx(hsvmat,hsvmat,Imgproc.MORPH_OPEN,kernel);
+        //闭运算
+        Imgproc.morphologyEx(hsvmat,hsvmat,Imgproc.MORPH_CLOSE,kernel);
+        //找轮廓数量
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat outMat = new Mat();
+        Imgproc.findContours(hsvmat,contours,outMat,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_SIMPLE);
+        Log.e(TAG,  "轮廓数量：" + contours.size());
+
+
+        MatOfPoint temp_contour=contours.get(0);
+
+        MatOfPoint2f approxCurve = new MatOfPoint2f();
+        // Imgproc.drawContours(test, contours, -1, new Scalar(0,255,0), 1);
+
+        //轮廓坐标
+        List<MatOfPoint2f> newContours = new ArrayList<>();
+        for(MatOfPoint point : contours) {
+            MatOfPoint2f newPoint = new MatOfPoint2f(point.toArray());
+            Log.i(TAG, "MatOfPoint2f " + newPoint.total());
+            double[] temp;
+            Log.i(TAG, "Point----------------- ");
+            for (int j = 0; j < newPoint.total(); j++) {
+                temp = newPoint.get(j, 0);
+                Point point1 = new Point(temp[0], temp[1]);
+                Log.i(TAG, "Point " + point1);
+            }
+            Log.i(TAG, "----------------- ");
+            newContours.add(newPoint);
+        }
+        Utils.matToBitmap(hsvmat,bitmap);
+        return bitmap;
     }
 
 } 

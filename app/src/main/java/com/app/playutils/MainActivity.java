@@ -14,12 +14,14 @@ import android.provider.Settings;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,11 +43,13 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
     private Button opencvServer;
     private Button closeServer;
     private TextView info;
+    private ImageView image;
     private static int REQUEST_MEDIA_PROJECTION = 0;
     private static int REQUEST_OTHER_PERMISSION = 1;
     private ScreenShotHelper screenShotHelper;
     private LocalReceiver mLocalReceiver;
     private LocalBroadcastManager mLocalBroadcastManager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
         openServer = findViewById(R.id.open_server);
         opencvServer = findViewById(R.id.opencv_server);
         closeServer = findViewById(R.id.close_server);
+        image = findViewById(R.id.image);
 
         info = findViewById(R.id.info);
 
@@ -83,6 +88,11 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
 
                     DotPoint point1 = OpencvOCR.ocr(1, srcmat1, dstmat1);
                     DotPoint point2 = OpencvOCR.ocr(2, srcmat2, dstmat2);
+
+                    Mat srcmat3 = Utils.loadResource(MainActivity.this, R.drawable.screenshot_3);
+                    Bitmap bitmap = OpencvOCR.findColorPoint(srcmat3);
+                    image.setImageBitmap(bitmap);
+
                     if (point1 != null && point2 != null) {
                         AntoApplication.getInstance().setPoint(point1);
                         AntoApplication.getInstance().setPoint(point2);
@@ -178,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
                 DotPoint point = null;
                 for (int i = 0 ; i < mats.size(); i++){
                     DotPoint p = OpencvOCR.ocr(i,srcmat,mats.get(i));
-                    if (p.getMaxVal() > 0.7){
+                    if (p.getMaxVal() > 0.55){
                         point = p;
                         break;
                     }
