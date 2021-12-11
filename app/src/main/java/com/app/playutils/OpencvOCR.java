@@ -12,9 +12,12 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,11 +88,10 @@ public class OpencvOCR {
     //紫色 130 160
     //红色 160 179
     //mat默认是BGR
-    public static Bitmap findColorPoint(Mat srcmat){
+    public static DotPoint findColorPoint(int index,Mat srcmat){
         Bitmap bitmap = Bitmap.createBitmap(srcmat.width(),srcmat.height(),Bitmap.Config.ARGB_8888);
         Imgproc.cvtColor(srcmat,srcmat,Imgproc.COLOR_BGR2RGB);
         Utils.matToBitmap(srcmat,bitmap);
-
         //定义一个颜色 mat
         Mat hsvmat = new Mat();
         //hsv 转换
@@ -107,30 +109,49 @@ public class OpencvOCR {
         Mat outMat = new Mat();
         Imgproc.findContours(hsvmat,contours,outMat,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_SIMPLE);
         Log.e(TAG,  "轮廓数量：" + contours.size());
-
-
-        MatOfPoint temp_contour=contours.get(0);
-
-        MatOfPoint2f approxCurve = new MatOfPoint2f();
-        // Imgproc.drawContours(test, contours, -1, new Scalar(0,255,0), 1);
-
-        //轮廓坐标
-        List<MatOfPoint2f> newContours = new ArrayList<>();
-        for(MatOfPoint point : contours) {
-            MatOfPoint2f newPoint = new MatOfPoint2f(point.toArray());
-            Log.i(TAG, "MatOfPoint2f " + newPoint.total());
-            double[] temp;
-            Log.i(TAG, "Point----------------- ");
-            for (int j = 0; j < newPoint.total(); j++) {
-                temp = newPoint.get(j, 0);
-                Point point1 = new Point(temp[0], temp[1]);
-                Log.i(TAG, "Point " + point1);
+        //画轮廓
+        //Imgproc.drawContours(srcmat,contours,-1,new Scalar(0, 0, 255),2);
+        List<Point> list = new ArrayList();
+        //取最y 中心点坐标
+        double miny = 0;
+        double minx = 0;
+        for (int i = 0; i < contours.size(); i++) {
+            //去掉小面积轮廓
+            //if (Imgproc.contourArea(contours.get(i)) < srcmat.size().area() / (1000)) {
+            //    continue;
+            //}
+            MatOfPoint ptmat = contours.get(i);
+            // 取中心坐标点坐标 (Red)
+            MatOfPoint2f ptmat2 = new MatOfPoint2f(ptmat.toArray());
+            RotatedRect bbox = Imgproc.minAreaRect(ptmat2);
+            System.out.println("第"+ (i+1) +"个轮廓的中心点 x坐标：" + bbox.center.x + "  Y坐标：" + bbox.center.y);
+            if (miny == 0){
+                miny = bbox.center.y;
+                minx = bbox.center.x;
+            } else if (miny > bbox.center.y){
+                miny = bbox.center.y;
+                minx = bbox.center.x;
             }
-            Log.i(TAG, "----------------- ");
-            newContours.add(newPoint);
+
+            //画中心点
+            //color = new Scalar(255, 0, 0);
+            //Imgproc.circle(srcmat, bbox.center, 5, color, -1);
+            list.add(bbox.center);
+            //画矩形轮廓
+            //Rect box = bbox.boundingRect();
+            //color = new Scalar(0, 255, 0);
+            //Imgproc.rectangle(srcmat, box.tl(), box.br(), color, 2);
         }
-        Utils.matToBitmap(hsvmat,bitmap);
-        return bitmap;
+
+        DotPoint point = new DotPoint();
+        point.setIndex(index);
+        point.setMinX(NumberUtils.dtol(minx));
+        point.setMiny(NumberUtils.dtol(miny));
+        point.setMaxx(NumberUtils.dtol(minx));
+        point.setMaxy(NumberUtils.dtol(miny));
+        point.setMaxVal(1);
+
+        return point;
     }
 
 } 

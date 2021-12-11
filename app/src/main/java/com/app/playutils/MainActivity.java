@@ -90,8 +90,7 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
                     DotPoint point2 = OpencvOCR.ocr(2, srcmat2, dstmat2);
 
                     Mat srcmat3 = Utils.loadResource(MainActivity.this, R.drawable.screenshot_3);
-                    Bitmap bitmap = OpencvOCR.findColorPoint(srcmat3);
-                    image.setImageBitmap(bitmap);
+                    OpencvOCR.findColorPoint(0, srcmat3);
 
                     if (point1 != null && point2 != null) {
                         AntoApplication.getInstance().setPoint(point1);
@@ -121,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
             closeServer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (screenShotHelper != null){
+                    if (screenShotHelper != null) {
                         screenShotHelper.stopScreenShot();
                     }
                 }
@@ -175,46 +174,48 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
     @Override
     public void onFinish(Bitmap bitmap) {
         //截图完成
-        if (bitmap != null){
-            //System.out.println("图片宽高：" + bitmap.getWidth() +  "   " + bitmap.getHeight());
+        if (bitmap != null) {
+            int Atv = AntoApplication.getInstance().getActivity();
+            DotPoint point = null;
+            int index = 0;
+            switch (Atv) {
+                case Constant.LoginAt:
+                    point = Workflow.clickView(this, bitmap, R.drawable.mr_1);
+                    index = 1;
+                    break;
+                case Constant.HomeAt:
+                    point = Workflow.clickView(this, bitmap, R.drawable.mr_2);
+                    index = 2;
+                    break;
+                case Constant.LevelAt:
+                    point = Workflow.clickLevel(bitmap);
+                    index = 3;
+                    break;
+                case Constant.BattleAt:
+                    index = 4;
+                    break;
+                default:
+                    break;
+            }
+            AntoApplication.getInstance().setPoint(point);
+            Intent intent = new Intent(Constant.dotClike);
+            intent.putExtra("data", point);
+            mLocalBroadcastManager.sendBroadcast(intent);
             try {
-                Mat dstmat1 = Utils.loadResource(MainActivity.this, R.drawable.mr_1);
-                Mat dstmat2 = Utils.loadResource(MainActivity.this, R.drawable.mr_2);
-                List<Mat> mats = new ArrayList<>();
-                mats.add(dstmat1);
-                mats.add(dstmat2);
-                Mat srcmat = new Mat();
-                Utils.bitmapToMat(bitmap,srcmat);
-                DotPoint point = null;
-                for (int i = 0 ; i < mats.size(); i++){
-                    DotPoint p = OpencvOCR.ocr(i,srcmat,mats.get(i));
-                    if (p.getMaxVal() > 0.55){
-                        point = p;
-                        break;
-                    }
-                }
-                if (point != null){
-                    AntoApplication.getInstance().setPoint(point);
-                    System.out.println("相识度：" + point.getMaxVal() + "第" + point.getIndex() + " 步点击坐标：x：" + (point.getMaxx() + point.getMinX())/2
-                            +" y："+ (point.getMaxy() + point.getMiny())/2 + "\n");
-
-                    Intent intent = new Intent(Constant.dotClike);
-                    intent.putExtra("data", point);
-                    mLocalBroadcastManager.sendBroadcast(intent);
-
-                }
-
-            } catch (IOException e) {
+                Thread.sleep(5000);
+                AntoApplication.getInstance().setActivity(index);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
         } else {
-            Toast.makeText(this,"识图失败,请稍等！",Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "识图失败,请稍等！", Toast.LENGTH_LONG).show();
         }
     }
 
     @Override
     public void stop() {
-        Toast.makeText(this,"服务关闭！",Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "服务关闭！", Toast.LENGTH_LONG).show();
         Intent itemIntent = new Intent(this, PlayScreenService.class);
         stopService(itemIntent);
     }
@@ -232,7 +233,7 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
 
     //截图
     private void try2StartScreenShot() {
-        if (screenShotHelper != null){
+        if (screenShotHelper != null) {
             screenShotHelper.startScreenShot();
         } else {
             MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -269,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements ScreenShotHelper.
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mLocalReceiver != null){
+        if (mLocalReceiver != null) {
             unregisterReceiver(mLocalReceiver);
         }
     }

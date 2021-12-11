@@ -20,6 +20,12 @@ public class AntoApplication extends Application {
 
     //当前界面可点击图标
     private DotPoint point;
+    //当前停留功能界面
+    private int Activity;
+    //当前体力  最大20
+    private int Phys;
+    //当前胜数
+    private int victorys;
 
 
     @Override
@@ -61,5 +67,29 @@ public class AntoApplication extends Application {
 
     public DotPoint getPoint() {
         return point;
+    }
+
+    public int getActivity() {
+        return Activity;
+    }
+
+    public void setActivity(int activity) {
+        Activity = activity;
+    }
+
+    public int getPhys() {
+        return Phys;
+    }
+
+    public void setPhys(int phys) {
+        Phys = phys;
+    }
+
+    public int getVictorys() {
+        return victorys;
+    }
+
+    public void setVictorys(int victorys) {
+        this.victorys = victorys;
     }
 }

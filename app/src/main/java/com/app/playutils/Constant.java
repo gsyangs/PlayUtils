@@ -1,5 +1,7 @@
 package com.app.playutils;
 
+import android.app.Activity;
+
 /**
  * @author:create by ys
  * 时间:2021/11/30 15
@@ -17,12 +19,14 @@ public class Constant {
     public static String dotClike = "dot_clike";
 
 
-    public static final String SP_INIT = "SP_INIT";
-    public static final String SP_RECT_LEFT = "SP_RECT_LEFT";
-    public static final String SP_RECT_TOP = "SP_RECT_TOP";
-    public static final String SP_RECT_HEIGH = "SP_RECT_HEIGH";
+    //登录
+    public static final int LoginAt = 0;
+    //首页
+    public static final int HomeAt = 1;
+    //关卡地图
+    public static final int LevelAt = 2;
+    //战斗界面
+    public static final int BattleAt = 3;
 
-
-    public static final String APP_CACHE_DIR = "/storage/emulated/0/playutils/" ;
 }
 

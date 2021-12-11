@@ -68,6 +68,12 @@ public class PlayAccessibility extends BaseAccessibilityService{
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void clickMiddleInRect(DotPoint point) {
+        if (point == null){
+            return;
+        }
+
+        System.out.println("相识度：" + point.getMaxVal() + "第" + point.getIndex() + " 步点击坐标：x：" + (point.getMaxx() + point.getMinX()) / 2
+                + " y：" + (point.getMaxy() + point.getMiny()) / 2 + "\n");
         Path path = new Path();
         path.moveTo(((point.getMaxx() + point.getMinX())/2), ((point.getMaxy() + point.getMiny())/2));
         GestureDescription.Builder builder = new GestureDescription.Builder();
